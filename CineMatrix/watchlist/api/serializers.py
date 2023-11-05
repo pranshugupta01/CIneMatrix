@@ -6,6 +6,8 @@ class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
         fields = "__all__"
+        # fields = ["id", "name", "description", "active"]
+        # exclude = ["active"]
 
     def validate_name(self, value):
         if len(value) < 3:
