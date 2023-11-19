@@ -5,20 +5,42 @@ from watchlist.api.serializers import (
 )
 from rest_framework.response import Response
 from rest_framework import status, mixins, generics
+from django.core.exceptions import ValidationError
+from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework.views import APIView
 from watchlist.models import WatchList, StreamPlatform, Reviews
 
 
-class ReviewList(generics.ListCreateAPIView):
-    queryset= Reviews.objects.all()
-    serializer_class=ReviewSerializer
-    
-    
+class ReviewCreate(generics.CreateAPIView):
+    serializer_class = ReviewSerializer
+
+    def perform_create(self, serializer):
+        pk = self.kwargs.get("pk")
+        watchlist = WatchList.objects.get(pk=pk)
+        review_user = self.request.user
+        review_queryset = Reviews.objects.filter(
+            watchList=watchlist, author=review_user
+        )
+        if review_queryset.exists():
+            error_message = "Review already done by you"
+            print(f"Error: {error_message}")
+            raise PermissionDenied(f"Already reviewed by {review_user}")
+        serializer.save(author=review_user, watchList=watchlist)
+
+
+class ReviewList(generics.ListAPIView):
+    # queryset = Reviews.objects.all()
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs["pk"]
+
+        return Reviews.objects.filter(watchList=pk)
+
+
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset= Reviews.objects.all()
-    serializer_class=ReviewSerializer
-
-
+    queryset = Reviews.objects.all()
+    serializer_class = ReviewSerializer
 
 
 # class ReviewList(
