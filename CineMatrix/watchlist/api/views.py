@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework.views import APIView
 from watchlist.models import WatchList, StreamPlatform, Reviews
+from watchlist.api.permissions import AdminOrReadOnly, ReviewUserOrReadOnly
 
 
 class ReviewCreate(generics.CreateAPIView):
@@ -41,6 +42,7 @@ class ReviewList(generics.ListAPIView):
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Reviews.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = [ReviewUserOrReadOnly]
 
 
 # class ReviewList(
