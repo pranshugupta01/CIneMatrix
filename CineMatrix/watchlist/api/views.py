@@ -22,11 +22,49 @@ class ReviewCreate(generics.CreateAPIView):
         review_queryset = Reviews.objects.filter(
             watchList=watchlist, author=review_user
         )
+        print(f"Before creation - number_ratings: {watchlist.number_ratings}, avg_rating: {watchlist.avg_rating}")
         if review_queryset.exists():
             error_message = "Review already done by you"
             print(f"Error: {error_message}")
             raise PermissionDenied(f"Already reviewed by {review_user}")
+
+        new_rating = serializer.validated_data["rating"]
+
+        # Calculate new average rating and update number of ratings
+        total_ratings = watchlist.avg_rating * watchlist.number_ratings
+        watchlist.number_ratings = watchlist.number_ratings + 1
+        watchlist.avg_rating = (total_ratings + new_rating) / watchlist.number_ratings
+
+        # Save changes to the WatchList
+        watchlist.save()
+        print(f"After creation - number_ratings: {watchlist.number_ratings}, avg_rating: {watchlist.avg_rating}")
+
+        # Save the new review and return the created instance
         serializer.save(author=review_user, watchList=watchlist)
+
+        def perform_destroy(self, instance):
+            print(f"Before deletion - number_ratings: {instance.watchList.number_ratings}, avg_rating: {instance.watchList.avg_rating}")
+
+            watchlist = instance.watchList
+
+            # Adjust the number_ratings and avg_rating when a review is deleted
+            total_ratings = watchlist.avg_rating * watchlist.number_ratings
+
+            # If there's only one review, reset avg_rating to 0
+            if watchlist.number_ratings == 1:
+                watchlist.avg_rating = 0
+            else:
+                # Calculate new avg_rating after removing the deleted review
+                watchlist.avg_rating = (total_ratings - instance.rating) / (watchlist.number_ratings - 1)
+
+            # Update number_ratings and save changes to the WatchList
+            watchlist.number_ratings -= 1
+            watchlist.save()
+
+            print(f"After deletion - number_ratings: {watchlist.number_ratings}, avg_rating: {watchlist.avg_rating}")
+
+            # Delete the review
+            instance.delete()
 
 
 class ReviewList(generics.ListAPIView):
@@ -42,7 +80,30 @@ class ReviewList(generics.ListAPIView):
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Reviews.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [ReviewUserOrReadOnly]
+    # permission_classes = [ReviewUserOrReadOnly]
+    def perform_destroy(self, instance):
+            print(f"Before deletion - number_ratings: {instance.watchList.number_ratings}, avg_rating: {instance.watchList.avg_rating}")
+
+            watchlist = instance.watchList
+
+            # Adjust the number_ratings and avg_rating when a review is deleted
+            total_ratings = watchlist.avg_rating * watchlist.number_ratings
+
+            # If there's only one review, reset avg_rating to 0
+            if watchlist.number_ratings == 1:
+                watchlist.avg_rating = 0
+            else:
+                # Calculate new avg_rating after removing the deleted review
+                watchlist.avg_rating = (total_ratings - instance.rating) / (watchlist.number_ratings - 1)
+
+            # Update number_ratings and save changes to the WatchList
+            watchlist.number_ratings -= 1
+            watchlist.save()
+
+            print(f"After deletion - number_ratings: {watchlist.number_ratings}, avg_rating: {watchlist.avg_rating}")
+
+            # Delete the review
+            instance.delete()
 
 
 # class ReviewList(
