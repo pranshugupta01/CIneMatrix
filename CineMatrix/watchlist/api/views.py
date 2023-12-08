@@ -14,6 +14,7 @@ from watchlist.api.permissions import IsAdminOrReviewUserOrReadOnly, IsAdminOrRe
 
 
 class ReviewCreate(generics.CreateAPIView):
+    permission_classes=[IsAuthenticated]
     serializer_class = ReviewSerializer
     
     def perform_create(self, serializer):
@@ -42,7 +43,7 @@ class ReviewCreate(generics.CreateAPIView):
 class ReviewList(generics.ListAPIView):
     # queryset = Reviews.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes=[IsAdminOrReadOnly]
 
     
     def get_queryset(self):
@@ -76,6 +77,7 @@ class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 class WatchListAV(APIView):
+    permission_classes=[IsAdminOrReadOnly]
     
     def get(self, request):
         movies = WatchList.objects.all()
@@ -92,6 +94,7 @@ class WatchListAV(APIView):
 
 
 class WatchDetail(APIView):
+    permission_classes=[IsAdminOrReadOnly]
     
     def get(self, request, pk):
         try:
@@ -124,6 +127,7 @@ class WatchDetail(APIView):
 
 
 class StreamPlatformList(APIView):
+    permission_classes=[IsAdminOrReadOnly]
     
     def get(self, request):
         platforms = StreamPlatform.objects.all()
@@ -140,6 +144,8 @@ class StreamPlatformList(APIView):
 
 
 class StreamPlatformDetail(APIView):
+    
+    permission_classes=[IsAdminOrReadOnly]
     
     def get(self, request, pk):
         try:
